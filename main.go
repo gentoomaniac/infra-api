@@ -7,6 +7,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/time/rate"
 
 	"github.com/gentoomaniac/infra-api/pkg/gocli"
 	"github.com/gentoomaniac/infra-api/pkg/logging"
@@ -23,6 +24,7 @@ var (
 var (
 	ListenAddr = ":10000"
 	Names      = make(map[string]bool)
+	limiter    = rate.NewLimiter(1, 1)
 )
 
 var cli struct {
@@ -48,11 +50,23 @@ func main() {
 	myRouter.HandleFunc("/names/{name}", addName).Methods("POST")
 
 	log.Info().Str("listenAddr", ListenAddr).Msg("starting server")
-	if err := http.ListenAndServe(ListenAddr, myRouter); err != nil {
+	if err := http.ListenAndServe(ListenAddr, limit(myRouter)); err != nil {
 		log.Error().Err(err).Msg("")
 	}
 
 	ctx.Exit(0)
+}
+
+func limit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !limiter.Allow() {
+			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			log.Warn().Str("client", r.RemoteAddr).Str("uri", r.RequestURI).Msg("rate limited")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 type Message struct {
