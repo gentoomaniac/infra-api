@@ -46,6 +46,7 @@ func main() {
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", root).Methods("GET")
+	myRouter.HandleFunc("/buckets/{region}/{bucket}", aws.CreateBucket).Methods("PUT")
 	myRouter.HandleFunc("/buckets/{region}", aws.ListBuckets).Methods("GET")
 	myRouter.HandleFunc("/hello/{name}", hello).Methods("GET")
 	myRouter.HandleFunc("/names/{name}", updateName).Methods("PUT")
