@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
 
+	"github.com/gentoomaniac/infra-api/pkg/aws"
 	"github.com/gentoomaniac/infra-api/pkg/gocli"
 	"github.com/gentoomaniac/infra-api/pkg/logging"
 )
@@ -45,6 +46,7 @@ func main() {
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", root).Methods("GET")
+	myRouter.HandleFunc("/buckets/{region}", aws.ListBuckets).Methods("GET")
 	myRouter.HandleFunc("/hello/{name}", hello).Methods("GET")
 	myRouter.HandleFunc("/names/{name}", updateName).Methods("PUT")
 	myRouter.HandleFunc("/names/{name}", addName).Methods("POST")
